@@ -9,14 +9,58 @@ library(bslib)
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
 # Fonction API
+# get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
+#   url <- "https://api-adresse.data.gouv.fr/search/"
+#   query_params <- list(postcode = codpost, city = libcom, q = libvoie, limit = 1)
+#   if (!is.null(code_insee) && code_insee != "") {
+#     query_params$citycode <- code_insee
+#   }
+#   
+#   response <- GET(url, query = query_params)
+#   if (response$status_code == 200) {
+#     data <- fromJSON(content(response, "text"), simplifyVector = FALSE)
+#     if (length(data$features) > 0) {
+#       props <- data$features[[1]]$properties
+#       coords <- data$features[[1]]$geometry$coordinates
+#       return(list(
+#         longitude = coords[[1]],
+#         latitude = coords[[2]],
+#         label = props$label %||% "",
+#         name = props$name %||% "",
+#         city = props$city %||% "",
+#         postcode = props$postcode %||% "",
+#         insee = props$citycode %||% "",
+#         street = props$street %||% "",
+#         housenumber = props$housenumber %||% "",
+#         district = props$district %||% "",
+#         context = props$context %||% "",
+#         score = props$score %||% NA,
+#         type = props$type %||% ""
+#       ))
+#     }
+#   }
+#   return(NULL)
+# }
 get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
   url <- "https://api-adresse.data.gouv.fr/search/"
-  query_params <- list(postcode = codpost, city = libcom, q = libvoie, limit = 1)
+  
+  # Construire la requête dynamiquement
+  query_params <- list(q = libvoie, limit = 1)
+  
+  if (!is.null(codpost) && codpost != "") {
+    query_params$postcode <- codpost
+  }
+  if (!is.null(libcom) && libcom != "") {
+    query_params$city <- libcom
+  }
   if (!is.null(code_insee) && code_insee != "") {
     query_params$citycode <- code_insee
   }
   
+  print(query_params)  # utile pour voir les requêtes générées
+  
   response <- GET(url, query = query_params)
+  
   if (response$status_code == 200) {
     data <- fromJSON(content(response, "text"), simplifyVector = FALSE)
     if (length(data$features) > 0) {
@@ -129,11 +173,13 @@ ui <- navbarPage(
              sidebarLayout(
                sidebarPanel(
                  h4("Saisir une adresse"),
-                 textInput("codpost", "Code postal", "75001"),
-                 textInput("libcom", "Ville (facultatif)", ""),
-                 textInput("code_insee", "Code commune INSEE (prioritaire)", ""),
-                 textInput("libvoie", "Adresse (voie)", "Rue de Rivoli"),
-                 actionButton("go", "Rechercher", class = "btn btn-primary")
+                 textInput("codpost", "Code postal", ""),
+                 textInput("libcom", "Ville", ""),
+                 textInput("code_insee", "Code commune INSEE", ""),
+                 textInput("libvoie", "Adresse", ""),
+                 actionButton("go", "Rechercher", class = "btn btn-primary"),
+                 div(style = "margin-top: 10px;"),
+                 actionButton("reset", "Réinitialiser", class = "btn btn-primary")
                ),
                mainPanel(
                  leafletOutput("map", height = "400px"),
@@ -169,7 +215,8 @@ server <- function(input, output, session) {
   coords <- reactiveVal(NULL)
   
   observeEvent(input$go, {
-    req(input$codpost, input$libvoie)
+    req(#input$codpost, 
+      input$libvoie)
     res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
     coords(res)
   })
@@ -214,6 +261,18 @@ server <- function(input, output, session) {
       "📏 Score : ", ifelse(!is.na(coord$score), paste0(round(coord$score * 100, 1), " %"), "Non fourni"), "\n",
       "🔍 Type : ", ifelse(coord$type != "", coord$type, "Non fourni")
     ))
+  })
+  
+  observeEvent(input$reset, {
+    updateTextInput(session, "codpost", value = "")
+    updateTextInput(session, "libcom", value = "")
+    updateTextInput(session, "code_insee", value = "")
+    updateTextInput(session, "libvoie", value = "")
+    coords(NULL)  # Réinitialise la valeur stockée
+    
+    leafletProxy("map") %>%
+      clearMarkers() %>%
+      setView(lng = 2.2, lat = 46.6, zoom = 6)  # Retour à la vue France
   })
   
 }
