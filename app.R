@@ -7,7 +7,6 @@ library(bslib)
 
 # Utilitaire pour valeur par défaut
 `%||%` <- function(a, b) if (!is.null(a)) a else b
-
 # Fonction API
 # get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
 #   url <- "https://api-adresse.data.gouv.fr/search/"
