@@ -1,9 +1,15 @@
-library(shiny)
-library(shinyjs)
-library(leaflet)
-library(httr)
-library(jsonlite)
-library(bslib)
+# Définir la liste des packages nécessaires
+liste_packages <- c("shiny", "shinyjs", "leaflet", "httr", "jsonlite", "bslib")
+
+# Boucle d'installation/chargement
+for (package in liste_packages) {
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    install.packages(package)
+    library(package, character.only = TRUE)
+  } else {
+    library(package, character.only = TRUE)
+  }
+}
 
 # Utilitaire pour valeur par défaut
 `%||%` <- function(a, b) if (!is.null(a)) a else b
@@ -184,7 +190,9 @@ ui <- navbarPage(
                  leafletOutput("map", height = "400px"),
                  tags$hr(),
                  h4("Informations renvoyées par l'API"),
-                 verbatimTextOutput("info")
+                 verbatimTextOutput("info"),
+                 tags$hr(),
+                 uiOutput("liste_resultats")
                )
              )
            )
@@ -209,6 +217,24 @@ ui <- navbarPage(
   )
 )
 
+get_city_info_from_api_multi <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
+  url <- "https://api-adresse.data.gouv.fr/search/"
+  query_params <- list(q = libvoie, limit = 5)
+  
+  if (!is.null(codpost) && codpost != "") query_params$postcode <- codpost
+  if (!is.null(libcom) && libcom != "") query_params$city <- libcom
+  if (!is.null(code_insee) && code_insee != "") query_params$citycode <- code_insee
+  
+  response <- GET(url, query = query_params)
+  if (response$status_code == 200) {
+    # ⚠️ Ne pas vectoriser ici, garder la structure liste pour accéder via $
+    data <- fromJSON(content(response, "text", encoding = "UTF-8"), simplifyVector = FALSE)
+    return(data$features)
+  }
+  return(NULL)
+}
+
+
 # Serveur
 server <- function(input, output, session) {
   coords <- reactiveVal(NULL)
@@ -217,7 +243,9 @@ server <- function(input, output, session) {
     req(#input$codpost, 
       input$libvoie)
     res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
-    coords(res)
+    # coords(res)
+    coords(list(result = res, all_results = get_city_info_from_api_multi(input$codpost, input$libcom, input$libvoie, input$code_insee)))
+    
   })
   
   output$map <- renderLeaflet({
@@ -228,18 +256,29 @@ server <- function(input, output, session) {
   
   observe({
     coord <- coords()
-    if (!is.null(coord)) {
+    
+    if (!is.null(coord) &&
+        !is.null(coord$result) &&
+        !is.null(coord$result$longitude) &&
+        !is.null(coord$result$latitude)) {
+      
       leafletProxy("map") %>%
         clearMarkers() %>%
-        setView(lng = coord$longitude, lat = coord$latitude, zoom = 16) %>%
-        addMarkers(lng = coord$longitude, lat = coord$latitude, popup = coord$label)
+        setView(lng = coord$result$longitude, lat = coord$result$latitude, zoom = 16) %>%
+        addMarkers(lng = coord$result$longitude, lat = coord$result$latitude, popup = coord$result$label)
+    } else {
+      # Efface les anciens marqueurs si aucun résultat
+      leafletProxy("map") %>%
+        clearMarkers() %>%
+        setView(lng = 2.2, lat = 46.6, zoom = 6)
     }
   })
+  
   
   output$info <- renderPrint({
     coord <- coords()
     
-    if (is.null(coord)) {
+    if (is.null(coord$result)) {
       if (input$go == 0) {
         cat("ℹ️ Saisissez une adresse puis cliquez sur \"Rechercher\".")
       } else {
@@ -249,18 +288,19 @@ server <- function(input, output, session) {
     }
     
     cat(paste0(
-      "📍 Adresse : ", coord$label, "\n",
-      "🏙️ Ville : ", coord$city, "\n",
-      "📮 Code postal : ", coord$postcode, "\n",
-      "🆔 Code commune INSEE : ", coord$insee, "\n",
-      "🛣️ Rue : ", ifelse(coord$street != "", coord$street, "Non fournie"), "\n",
-      "🏠 Numéro : ", ifelse(coord$housenumber != "", coord$housenumber, "Non fourni"), "\n",
-      "📌 Quartier : ", ifelse(coord$district != "", coord$district, "Non fourni"), "\n",
-      "🗺️ Contexte : ", ifelse(coord$context != "", coord$context, "Non fourni"), "\n",
-      "📏 Score : ", ifelse(!is.na(coord$score), paste0(round(coord$score * 100, 1), " %"), "Non fourni"), "\n",
-      "🔍 Type : ", ifelse(coord$type != "", coord$type, "Non fourni")
+      "📍 Adresse : ", coord$result$label, "\n",
+      "🏙️ Ville : ", coord$result$city, "\n",
+      "📮 Code postal : ", coord$result$postcode, "\n",
+      "🆔 Code commune INSEE : ", coord$result$insee, "\n",
+      "🛣️ Rue : ", ifelse(coord$result$street != "", coord$result$street, "Non fournie"), "\n",
+      "🏠 Numéro : ", ifelse(coord$result$housenumber != "", coord$result$housenumber, "Non fourni"), "\n",
+      "📌 Quartier : ", ifelse(coord$result$district != "", coord$result$district, "Non fourni"), "\n",
+      "🗺️ Contexte : ", ifelse(coord$result$context != "", coord$result$context, "Non fourni"), "\n",
+      "📏 Score : ", ifelse(!is.na(coord$result$score), paste0(round(coord$result$score * 100, 1), " %"), "Non fourni"), "\n",
+      "🔍 Type : ", ifelse(coord$result$type != "", coord$result$type, "Non fourni")
     ))
   })
+  
   
   observeEvent(input$reset, {
     updateTextInput(session, "codpost", value = "")
@@ -273,6 +313,67 @@ server <- function(input, output, session) {
       clearMarkers() %>%
       setView(lng = 2.2, lat = 46.6, zoom = 6)  # Retour à la vue France
   })
+  
+  output$liste_resultats <- renderUI({
+    res <- coords()
+    feats <- res$all_results
+    
+    cat("----- DEBUG : début liste_resultats -----\n")
+    cat("Nb total de résultats bruts:", length(feats), "\n")
+    
+    if (is.null(feats) || length(feats) == 0) {
+      cat("⚠️ Aucun résultat retourné par l'API.\n")
+      return(tags$div(class = "alert alert-warning", "❌ Aucun résultat trouvé."))
+    }
+    
+    labels <- lapply(feats, function(f) {
+      if (!is.null(f$properties$label)) {
+        type <- f$properties$type %||% ""
+        label <- f$properties$label
+        insee <- f$properties$citycode %||% ""
+        cp <- f$properties$postcode %||% ""
+        score <- f$properties$score %||% NA
+        score_txt <- if (!is.na(score)) paste0(" - Score : ", round(score * 100, 1), " %") else ""
+        
+        if (type == "municipality" && insee != "" && cp != "") {
+          paste0(label, " (Depcom : ", insee, ", CP : ", cp, ")", score_txt)
+        } else {
+          paste0(label, score_txt)
+        }
+      } else {
+        NULL
+      }
+    })
+    
+    labels_valides <- labels[!sapply(labels, is.null)]
+    
+    cat("Nb de résultats valides:", length(labels_valides), "\n")
+    cat("Liste des labels valides :\n")
+    print(labels_valides)
+    cat("----- DEBUG : fin liste_resultats -----\n")
+    
+    titre <- if (length(labels_valides) == 1) {
+      "✅ Un seul résultat trouvé :"
+    } else {
+      paste0("✅ ", length(labels_valides), " résultats trouvés :")
+    }
+    
+    liste <- lapply(labels_valides, tags$li)
+    
+    wellPanel(
+      tags$h5(titre),
+      tags$ul(liste)
+    )
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
 }
 
