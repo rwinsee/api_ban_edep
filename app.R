@@ -161,16 +161,57 @@ ui <- navbarPage(
            fluidPage(
              titlePanel("Recherche d'adresse"),
              sidebarLayout(
+               # sidebarPanel(
+               # 
+               #   selectInput("fond_carte", "Fond de carte",
+               #               choices = c(
+               #                 "Plan (OSM)" = "osm",
+               #                 "Satellite (Esri)" = "satellite",
+               #                 "Carto clair" = "carto_light",
+               #                 "Carto sombre" = "carto_dark",
+               #                 "Relief (Esri)" = "esri_topo",
+               #                 "Relief (OpenTopoMap)" = "topo"
+               #               ),
+               #               selected = "osm")
+               #   
+               #   ,
+               #   h4("Saisir une adresse"),
+               #   textInput("codpost", "Code postal", ""),
+               #   textInput("libcom", "Ville", ""),
+               #   textInput("code_insee", "Code commune INSEE", ""),
+               #   textInput("libvoie", "Adresse", ""),
+               #   actionButton("go", "Rechercher", class = "btn btn-primary"),
+               #   div(style = "margin-top: 10px;"),
+               #   actionButton("reset", "Réinitialiser", class = "btn btn-primary")
+               # ),
                sidebarPanel(
-                 h4("Saisir une adresse"),
-                 textInput("codpost", "Code postal", ""),
-                 textInput("libcom", "Ville", ""),
-                 textInput("code_insee", "Code commune INSEE", ""),
-                 textInput("libvoie", "Adresse", ""),
-                 actionButton("go", "Rechercher", class = "btn btn-primary"),
-                 div(style = "margin-top: 10px;"),
-                 actionButton("reset", "Réinitialiser", class = "btn btn-primary")
-               ),
+                 # 🔍 Boîte de saisie d'adresse
+                 wellPanel(
+                   h4("Saisir une adresse"),
+                   textInput("codpost", "Code postal", ""),
+                   textInput("libcom", "Ville", ""),
+                   textInput("code_insee", "Code commune INSEE", ""),
+                   textInput("libvoie", "Adresse", ""),
+                   actionButton("go", "Rechercher", class = "btn btn-primary"),
+                   div(style = "margin-top: 10px;"),
+                   actionButton("reset", "Réinitialiser", class = "btn btn-primary")
+                 ),
+                 p(),p(),
+                 # 🗺️ Boîte séparée pour le fond de carte
+                 wellPanel(
+                   h4("Choix du fond de carte"),
+                   selectInput("fond_carte", "Fond de carte",
+                               choices = c(
+                                 "Plan (OSM)" = "osm",
+                                 "Satellite (Esri)" = "satellite",
+                                 "Carto clair" = "carto_light",
+                                 "Carto sombre" = "carto_dark",
+                                 "Relief (Esri)" = "esri_topo"
+                               ),
+                               selected = "osm")
+                 )
+               )
+               ,
                mainPanel(
                  leafletOutput("map", height = "400px"),
                  tags$hr(),
@@ -193,20 +234,46 @@ ui <- navbarPage(
              
              h4("Fonctionnement technique"),
              tags$ul(
-               tags$li("L’interface est développée en R avec le framework ", strong("Shiny"), "."),
+               tags$li("Interface développée en R avec le framework ", strong("Shiny"), "."),
                tags$li("Utilisation de l’API REST de l’IGN : ", a("https://data.geopf.fr/geocodage/search", href = "https://data.geopf.fr/geocodage/search", target = "_blank"), "."),
-               tags$li("La cartographie est assurée par le package ", strong("Leaflet"), "."),
+               tags$li("Cartographie assurée par le package ", strong("Leaflet"), "."),
                tags$li("Aucune donnée personnelle n’est collectée ni stockée.")
+             ),
+             
+             tags$hr(),
+             
+             h4("Code source & déploiement"),
+             tags$ul(
+               tags$li("💻 Code source de l’application : ", 
+                       a("github.com/rwinsee/api_ban_edep", href = "https://github.com/rwinsee/api_ban_edep", target = "_blank")),
+               tags$li("📦 Versions et releases : ", 
+                       a("github.com/rwinsee/api_ban_edep/releases", href = "https://github.com/rwinsee/api_ban_edep/releases", target = "_blank")),
+               tags$li("🚀 Projet de déploiement (infrastructure) : ", 
+                       a("github.com/rwinsee/api_ban_edep_deploy", href = "https://github.com/rwinsee/api_ban_edep_deploy", target = "_blank")),
+               tags$li("🐳 Image Docker disponible sur Docker Hub : ", 
+                       a("rwinsee/app_shiny_ban", href = "https://hub.docker.com/r/rwinsee/app_shiny_ban/tags", target = "_blank"))
              ),
              
              tags$hr(),
              
              h4("Auteur"),
              p("Développé par ", strong("Romuald Weidmann"), " (INSEE)."),
-             p("Version 0.0.2."),
-             p(em("Dernière mise à jour : 12 mai 2025"))
+             p("Version 0.0.2"),
+             p(em("Dernière mise à jour : 12 mai 2025")),
+             
+             tags$hr(),
+             
+             h4("Glossaire"),
+             tags$ul(
+               tags$li(strong("SIG :"), " Système d’information géographique. Outils permettant d’analyser, représenter et croiser des données géographiques."),
+               tags$li(strong("ESRI :"), " Entreprise spécialisée dans les SIG, éditrice du logiciel ArcGIS. Fournit de nombreux fonds de carte, notamment satellitaires."),
+               tags$li(strong("IGN :"), " Institut national de l'information géographique et forestière. Fournit des données géographiques publiques via ", a("data.geopf.fr", href = "https://data.geopf.fr", target = "_blank"), "."),
+               tags$li(strong("OSM :"), " OpenStreetMap. Projet collaboratif de cartographie libre, utilisé ici comme fond cartographique par défaut."),
+               tags$li(strong("Fonds de carte :"), " Représentation visuelle du fond cartographique (plan, satellite, topographie, etc.) sélectionnable par l'utilisateur.")
+             )
            )
   )
+  
   
 )
 
@@ -226,10 +293,16 @@ server <- function(input, output, session) {
     
   })
   
+  # output$map <- renderLeaflet({
+  #   leaflet() %>%
+  #     addTiles() %>%
+  #     setView(lng = 2.2, lat = 46.6, zoom = 6)  # France
+  # })
+  # 
   output$map <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
-      setView(lng = 2.2, lat = 46.6, zoom = 6)  # France
+      addTiles(group = "osm") %>%
+      setView(lng = 2.2, lat = 46.6, zoom = 6)
   })
   
   observe({
@@ -356,12 +429,18 @@ server <- function(input, output, session) {
     ))
   })
   
-  
-  
-  
-  
-  
-  
+  observeEvent(input$fond_carte, {
+    proxy <- leafletProxy("map")
+    proxy %>% clearTiles()
+    
+    switch(input$fond_carte,
+           "osm" = proxy %>% addTiles(),
+           "satellite" = proxy %>% addProviderTiles("Esri.WorldImagery"),
+           "carto_light" = proxy %>% addProviderTiles("CartoDB.Positron"),
+           "carto_dark" = proxy %>% addProviderTiles("CartoDB.DarkMatter"),
+           "topo" = proxy %>% addProviderTiles("OpenTopoMap")
+    )
+  })
   
   
 }
