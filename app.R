@@ -105,7 +105,26 @@ ui <- navbarPage(
     base_font = font_google("Inter")  # typographie moderne
   ),
   useShinyjs(),
+  extendShinyjs(text = "
+  document.addEventListener('keydown', function(e) {
+    const active = document.activeElement;
+    const idsCibles = ['codpost', 'libcom', 'code_insee', 'libvoie'];
+
+    if (idsCibles.includes(active.id)) {
+      if (e.key === 'Enter') {
+        setTimeout(() => {
+          Shiny.setInputValue('go', Date.now());
+        }, 20);
+      } else if (e.key === 'Escape') {
+        setTimeout(() => {
+          Shiny.setInputValue('reset', Date.now());
+        }, 10);
+      }
+    }
+  });
+", functions = c())
   
+  ,
   # Styles personnalisés façon ROMEO
   tags$style(HTML("
   .form-control, .selectize-input {
@@ -282,23 +301,6 @@ ui <- navbarPage(
 server <- function(input, output, session) {
   coords <- reactiveVal(NULL)
   
-  observeEvent(input$go, {
-    # req(#input$codpost, 
-    #   input$libvoie)
-    req(input$libvoie != "" || input$libcom != "" || input$codpost != "")
-    
-    res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
-    # coords(res)
-    coords(list(result = res, all_results = get_city_info_from_api_multi(input$codpost, input$libcom, input$libvoie, input$code_insee)))
-    
-  })
-  
-  # output$map <- renderLeaflet({
-  #   leaflet() %>%
-  #     addTiles() %>%
-  #     setView(lng = 2.2, lat = 46.6, zoom = 6)  # France
-  # })
-  # 
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles(group = "osm") %>%
