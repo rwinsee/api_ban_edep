@@ -1,5 +1,5 @@
 # Définir la liste des packages nécessaires
-liste_packages <- c("shiny", "shinyjs", "leaflet", "httr", "jsonlite", "bslib")
+liste_packages <- c("shiny", "shinyjs", "leaflet", "httr", "jsonlite", "bslib", "readr", "later")
 
 # Boucle d'installation/chargement
 for (package in liste_packages) {
@@ -11,16 +11,75 @@ for (package in liste_packages) {
   }
 }
 
+url_cog <- "https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_2025.csv"
+# library(readr)
+cog_2025 <- read_delim(url_cog, delim = ",", show_col_types = FALSE)
+str(cog_2025)
 # Utilitaire pour valeur par défaut
 `%||%` <- function(a, b) if (!is.null(a)) a else b
+
 # Fonction API
 
+# get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
+#   # url <- "https://api-adresse.data.gouv.fr/search/"
+#   url <- "https://data.geopf.fr/geocodage/search"
+#   
+#   # Construire la requête dynamiquement
+#   query_params <- list(q = libvoie, limit = 1)
+#   
+#   if (!is.null(codpost) && codpost != "") {
+#     query_params$postcode <- codpost
+#   }
+#   if (!is.null(libcom) && libcom != "") {
+#     query_params$city <- libcom
+#   }
+#   if (!is.null(code_insee) && code_insee != "") {
+#     query_params$citycode <- code_insee
+#   }
+#   
+#   print(query_params)  # utile pour voir les requêtes générées
+#   
+#   response <- GET(url, query = query_params)
+#   
+#   if (response$status_code == 200) {
+#     data <- fromJSON(content(response, "text"), simplifyVector = FALSE)
+#     if (length(data$features) > 0) {
+#       props <- data$features[[1]]$properties
+#       coords <- data$features[[1]]$geometry$coordinates
+#       return(list(
+#         longitude = coords[[1]],
+#         latitude = coords[[2]],
+#         label = props$label %||% "",
+#         name = props$name %||% "",
+#         city = props$city %||% "",
+#         postcode = props$postcode %||% "",
+#         insee = props$citycode %||% "",
+#         street = props$street %||% "",
+#         housenumber = props$housenumber %||% "",
+#         district = props$district %||% "",
+#         context = props$context %||% "",
+#         score = props$score %||% NA,
+#         type = props$type %||% ""
+#       ))
+#     }
+#   }
+#   return(NULL)
+# }
 get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
-  # url <- "https://api-adresse.data.gouv.fr/search/"
   url <- "https://data.geopf.fr/geocodage/search"
   
-  # Construire la requête dynamiquement
-  query_params <- list(q = libvoie, limit = 1)
+  champ_q <- libvoie
+  if (is.null(champ_q) || champ_q == "") {
+    champ_q <- libcom %||% codpost %||% code_insee
+    if (is.null(champ_q) || champ_q == "") {
+      champ_q <- "France"
+    }
+  }
+  
+  
+  
+  
+  query_params <- list(q = champ_q, limit = 1)
   
   if (!is.null(codpost) && codpost != "") {
     query_params$postcode <- codpost
@@ -32,7 +91,7 @@ get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee =
     query_params$citycode <- code_insee
   }
   
-  print(query_params)  # utile pour voir les requêtes générées
+  print(query_params)
   
   response <- GET(url, query = query_params)
   
@@ -60,6 +119,8 @@ get_city_info_from_api <- function(codpost, libcom = NULL, libvoie, code_insee =
   }
   return(NULL)
 }
+
+
 get_city_info_from_api_multi <- function(codpost, libcom = NULL, libvoie, code_insee = NULL) {
   # url <- "https://api-adresse.data.gouv.fr/search/"
   url <- "https://data.geopf.fr/geocodage/search"
@@ -242,7 +303,7 @@ ui <- navbarPage(
              )
            )
   ),
-    # Onglet À propos fusionné avec Accueil
+  # Onglet À propos fusionné avec Accueil
   tabPanel("À propos",
            fluidPage(
              h3("À propos de l’application"),
@@ -301,6 +362,7 @@ ui <- navbarPage(
 server <- function(input, output, session) {
   coords <- reactiveVal(NULL)
   
+  
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles(group = "osm") %>%
@@ -327,31 +389,99 @@ server <- function(input, output, session) {
     }
   })
   
-  
+  # Initialiser l'affichage dès l'arrivée sur la page
   output$info <- renderPrint({
     coord <- coords()
     
-    if (is.null(coord$result)) {
-      if (input$go == 0) {
-        cat("ℹ️ Saisissez une adresse puis cliquez sur \"Rechercher\".")
-      } else {
-        cat("❌ Aucune donnée trouvée pour cette adresse.")
+    if (is.null(coord)) {
+      return(invisible(cat(
+        "👋 Bienvenue dans l’outil de géolocalisation !\n",
+        "🔎 Renseignez une adresse à gauche, puis appuyez sur Entrée ou cliquez sur 'Rechercher'.\n",
+        "💡 Vous pouvez combiner : rue + ville, ou rue + code postal.\n"
+      )))
+    }
+    
+    res <- coord$result
+    if (is.null(res)) {
+      return(invisible(cat("❌ Aucune donnée trouvée pour cette adresse.")))
+    }
+    
+    invisible(cat(paste0(
+      "📍 Adresse : ", res$label, "\n",
+      "🏙️ Ville : ", res$city, "\n",
+      "📮 Code postal : ", res$postcode, "\n",
+      "🆔 Code commune INSEE : ", res$insee, "\n",
+      "🛣️ Rue : ", ifelse(res$street != "", res$street, "Non fournie"), "\n",
+      "🏠 Numéro : ", ifelse(res$housenumber != "", res$housenumber, "Non fourni"), "\n",
+      "📌 Quartier : ", ifelse(res$district != "", res$district, "Non fourni"), "\n",
+      "🗺️ Contexte : ", ifelse(res$context != "", res$context, "Non fourni"), "\n",
+      "📏 Score : ", ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "Non fourni"), "\n",
+      "🔍 Type : ", ifelse(res$type != "", res$type, "Non fourni")
+    )))
+  })
+  
+  
+  observeEvent(input$go, {
+    if (input$libcom == "" && input$code_insee != "") {
+      lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
+      if (length(lib) == 1 && !is.na(lib)) {
+        updateTextInput(session, "libcom", value = lib)
+        invalidateLater(300, session)
+        return()
       }
+    }
+    
+    if (input$libvoie == "" && input$libcom == "" && input$codpost == "" && input$code_insee == "") {
+      showNotification("Veuillez remplir au moins un champ pour lancer la recherche.", type = "error")
+      output$info <- renderPrint({ cat("ℹ️ L’API nécessite au moins une adresse...") })
       return()
     }
     
-    cat(paste0(
-      "📍 Adresse : ", coord$result$label, "\n",
-      "🏙️ Ville : ", coord$result$city, "\n",
-      "📮 Code postal : ", coord$result$postcode, "\n",
-      "🆔 Code commune INSEE : ", coord$result$insee, "\n",
-      "🛣️ Rue : ", ifelse(coord$result$street != "", coord$result$street, "Non fournie"), "\n",
-      "🏠 Numéro : ", ifelse(coord$result$housenumber != "", coord$result$housenumber, "Non fourni"), "\n",
-      "📌 Quartier : ", ifelse(coord$result$district != "", coord$result$district, "Non fourni"), "\n",
-      "🗺️ Contexte : ", ifelse(coord$result$context != "", coord$result$context, "Non fourni"), "\n",
-      "📏 Score : ", ifelse(!is.na(coord$result$score), paste0(round(coord$result$score * 100, 1), " %"), "Non fourni"), "\n",
-      "🔍 Type : ", ifelse(coord$result$type != "", coord$result$type, "Non fourni")
-    ))
+    res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
+    all <- get_city_info_from_api_multi(input$codpost, input$libcom, input$libvoie, input$code_insee)
+    
+    # 🛠️ Correction ici : utiliser le meilleur résultat de all_results si res est NULL
+    if (is.null(res) && length(all) > 0) {
+      props <- all[[1]]$properties
+      coords_simple <- all[[1]]$geometry$coordinates
+      res <- list(
+        longitude = coords_simple[[1]],
+        latitude = coords_simple[[2]],
+        label = props$label %||% "",
+        name = props$name %||% "",
+        city = props$city %||% "",
+        postcode = props$postcode %||% "",
+        insee = props$citycode %||% "",
+        street = props$street %||% "",
+        housenumber = props$housenumber %||% "",
+        district = props$district %||% "",
+        context = props$context %||% "",
+        score = props$score %||% NA,
+        type = props$type %||% ""
+      )
+    }
+    
+    coords(list(result = res, all_results = all))
+    
+    output$info <- renderPrint({
+      if (is.null(res)) {
+        cat("❌ Aucune donnée trouvée pour cette adresse.")
+        return()
+      }
+      
+      cat(paste0(
+        "📍 Adresse : ", res$label, "\n",
+        "🏙️ Ville : ", res$city, "\n",
+        "📮 Code postal : ", res$postcode, "\n",
+        "🆔 Code commune INSEE : ", res$insee, "\n",
+        "🛣️ Rue : ", ifelse(res$street != "", res$street, "Non fournie"), "\n",
+        "🏠 Numéro : ", ifelse(res$housenumber != "", res$housenumber, "Non fourni"), "\n",
+        "📌 Quartier : ", ifelse(res$district != "", res$district, "Non fourni"), "\n",
+        "🗺️ Contexte : ", ifelse(res$context != "", res$context, "Non fourni"), "\n",
+        "📏 Score : ", ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "Non fourni"), "\n",
+        "🔍 Type : ", ifelse(res$type != "", res$type, "Non fourni")
+      ))
+    })
   })
   
   
@@ -360,22 +490,50 @@ server <- function(input, output, session) {
     updateTextInput(session, "libcom", value = "")
     updateTextInput(session, "code_insee", value = "")
     updateTextInput(session, "libvoie", value = "")
-    coords(NULL)  # Réinitialise la valeur stockée
+    coords(NULL)
     
     leafletProxy("map") %>%
       clearMarkers() %>%
-      setView(lng = 2.2, lat = 46.6, zoom = 6)  # Retour à la vue France
+      setView(lng = 2.2, lat = 46.6, zoom = 6)
+    
+    # 🔁 Forcer le reset de la boîte d'information
+    output$info <- renderPrint({
+      coord <- coords()
+      if (is.null(coord)) {
+        return(invisible(cat(
+          "👋 Bienvenue dans l’outil de géolocalisation !\n",
+          "🔎 Renseignez une adresse à gauche, puis appuyez sur Entrée ou cliquez sur 'Rechercher'.\n",
+          "💡 Vous pouvez combiner : rue + ville, ou rue + code postal.\n"
+        )))
+      }
+      
+      res <- coord$result
+      if (is.null(res)) {
+        return(invisible(cat("❌ Aucune donnée trouvée pour cette adresse.")))
+      }
+      
+      invisible(cat(paste0(
+        "📍 Adresse : ", res$label, "\n",
+        "🏙️ Ville : ", res$city, "\n",
+        "📮 Code postal : ", res$postcode, "\n",
+        "🆔 Code commune INSEE : ", res$insee, "\n",
+        "🛣️ Rue : ", ifelse(res$street != "", res$street, "Non fournie"), "\n",
+        "🏠 Numéro : ", ifelse(res$housenumber != "", res$housenumber, "Non fourni"), "\n",
+        "📌 Quartier : ", ifelse(res$district != "", res$district, "Non fourni"), "\n",
+        "🗺️ Contexte : ", ifelse(res$context != "", res$context, "Non fourni"), "\n",
+        "📏 Score : ", ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "Non fourni"), "\n",
+        "🔍 Type : ", ifelse(res$type != "", res$type, "Non fourni")
+      )))
+    })
   })
+  
   
   output$liste_resultats <- renderUI({
     res <- coords()
+    if (is.null(res)) return(NULL)  # 🔹 Ajout clé
+    
     feats <- res$all_results
-    
-    cat("----- DEBUG : début liste_resultats -----\n")
-    cat("Nb total de résultats bruts:", length(feats), "\n")
-    
     if (is.null(feats) || length(feats) == 0) {
-      cat("⚠️ Aucun résultat retourné par l'API.\n")
       return(tags$div(class = "alert alert-warning", "❌ Aucun résultat trouvé."))
     }
     
@@ -400,11 +558,11 @@ server <- function(input, output, session) {
     
     labels_valides <- labels[!sapply(labels, is.null)]
     
-    cat("Nb de résultats valides:", length(labels_valides), "\n")
-    cat("Liste des labels valides :\n")
-    print(labels_valides)
-    cat("----- DEBUG : fin liste_resultats -----\n")
-    
+    # cat("Nb de résultats valides:", length(labels_valides), "\n")
+    # cat("Liste des labels valides :\n")
+    # print(labels_valides)
+    # cat("----- DEBUG : fin liste_resultats -----\n")
+    # 
     titre <- if (length(labels_valides) == 1) {
       "✅ Un seul résultat trouvé :"
     } else {
@@ -418,18 +576,18 @@ server <- function(input, output, session) {
       tags$ul(liste)
     )
   })
-  observeEvent(input$go, {
-    if (input$libvoie == "" && input$libcom == "" && input$codpost == "" && input$code_insee == "") {
-      showNotification("Veuillez remplir au moins un champ pour lancer la recherche.", type = "error")
-      return()
-    }
-    
-    res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
-    coords(list(
-      result = res,
-      all_results = get_city_info_from_api_multi(input$codpost, input$libcom, input$libvoie, input$code_insee)
-    ))
-  })
+  # observeEvent(input$go, {
+  #   if (input$libvoie == "" && input$libcom == "" && input$codpost == "" && input$code_insee == "") {
+  #     showNotification("Veuillez remplir au moins un champ pour lancer la recherche.", type = "error")
+  #     return()
+  #   }
+  #   
+  #   res <- get_city_info_from_api(input$codpost, input$libcom, input$libvoie, input$code_insee)
+  #   coords(list(
+  #     result = res,
+  #     all_results = get_city_info_from_api_multi(input$codpost, input$libcom, input$libvoie, input$code_insee)
+  #   ))
+  # })
   
   observeEvent(input$fond_carte, {
     proxy <- leafletProxy("map")
@@ -443,9 +601,18 @@ server <- function(input, output, session) {
            "topo" = proxy %>% addProviderTiles("OpenTopoMap")
     )
   })
+  observeEvent(input$code_insee, {
+    if (input$libcom == "" && input$code_insee != "") {
+      lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
+      if (length(lib) == 1 && !is.na(lib)) {
+        updateTextInput(session, "libcom", value = lib)
+      }
+    }
+  })
+  
   
   
 }
 
 # Lancer l'application
-shinyApp(ui, server)
+shinyApp(ui, server)  
