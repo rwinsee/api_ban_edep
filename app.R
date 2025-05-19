@@ -387,67 +387,99 @@ tags$style(HTML("
 
 "))
   ,
-  # Onglet de géolocalisation
-  tabPanel("Recherche BAN - France",
-           fluidPage(
-             titlePanel("Recherche d'adresse"),
-             sidebarLayout(
+# onglet principal pour la recherche d'adresses en france via api ban (ign)
+tabPanel("Recherche BAN - France",
+         
+         fluidPage(
+           
+           # titre principal en haut de la page
+           titlePanel("Recherche d'adresse"),
+           
+           # mise en page en deux colonnes : panneau latéral + panneau principal
+           sidebarLayout(
+             
+             # panneau latéral à gauche
+             sidebarPanel(
                
-               sidebarPanel(
-                 # 🔍 Boîte de saisie d'adresse
-                 wellPanel(
-                   h4("Saisir une adresse"),
-                   textInput("codpost", "Code postal", ""),
-                   textInput("libcom", "Ville", ""),
-                   textInput("code_insee", "Code commune INSEE", ""),
-                   textInput("libvoie", "Adresse", ""),
-                   actionButton("go", "Rechercher", class = "btn btn-primary"),
-                   div(style = "margin-top: 10px;"),
-                   actionButton("reset", "Réinitialiser", class = "btn btn-primary")
-                 ),
-                 p(),p(),
-                 #  Boîte séparée pour le fond de carte
-                 wellPanel(
-                   h4("Choix du fond de carte"),
-                   selectInput("fond_carte", "Fond de carte",
-                               choices = c(
-                                 "Plan (OSM)" = "osm",
-                                 "Satellite (Esri)" = "satellite",
-                                 "Carto clair" = "carto_light",
-                                 "Carto sombre" = "carto_dark",
-                                 "Relief (Esri)" = "esri_topo"
-                               ),
-                               selected = "osm")
+               # encadré pour les champs de saisie de l'adresse
+               wellPanel(
+                 h4("Saisir une adresse"),  # titre de l'encadré
+                 
+                 textInput("codpost", "Code postal", ""),        # champ code postal
+                 textInput("libcom", "Ville", ""),               # champ nom de commune
+                 textInput("code_insee", "Code commune INSEE", ""),  # champ code insee
+                 textInput("libvoie", "Adresse", ""),            # champ voie (rue)
+                 
+                 actionButton("go", "Rechercher", class = "btn btn-primary"),  # bouton de recherche
+                 div(style = "margin-top: 10px;"),                            # espacement vertical
+                 actionButton("reset", "Réinitialiser", class = "btn btn-primary")  # bouton de réinitialisation
+               ),
+               
+               p(), p(),  # espaces verticaux supplémentaires
+               
+               # encadré séparé pour le choix du fond de carte
+               wellPanel(
+                 h4("Choix du fond de carte"),  # titre
+                 
+                 selectInput(
+                   "fond_carte",                     # identifiant de l'input
+                   "Fond de carte",                  # étiquette
+                   choices = c(                      # liste des options disponibles
+                     "Plan (OSM)" = "osm",
+                     "Satellite (Esri)" = "satellite",
+                     "Carto clair" = "carto_light",
+                     "Carto sombre" = "carto_dark",
+                     "Relief (Esri)" = "esri_topo"
+                   ),
+                   selected = "osm"                  # valeur par défaut
                  )
                )
-               ,
-               mainPanel(
-                 leafletOutput("map", height = "400px"),
-                 tags$hr(),
-                 h4("Informations renvoyées par l'API"),
-                 uiOutput("info"),
-                 tags$hr(),
-                 uiOutput("liste_resultats")
-               )
+             ),
+             
+             # panneau principal à droite
+             mainPanel(
+               leafletOutput("map", height = "400px"),  # carte leaflet affichée
+               tags$hr(),                               # ligne de séparation
+               h4("Informations renvoyées par l'API"),  # titre des résultats
+               uiOutput("info"),                        # affichage de l'adresse détaillée
+               tags$hr(),
+               uiOutput("liste_resultats")              # affichage des suggestions alternatives
              )
            )
-  ),
-# Ajout de l'onglet international
+         )
+),
+# ajout de l'onglet dédié à la recherche mondiale via nominatim (openstreetmap)
 tabPanel("Recherche OSM - Monde",
+         
          fluidPage(
+           
+           # titre affiché en haut de l'interface
            titlePanel("Recherche internationale via Nominatim (OpenStreetMap)"),
+           
+           # disposition en deux colonnes : gauche (inputs), droite (résultats)
            sidebarLayout(
+             
+             # colonne de gauche contenant les champs de saisie
              sidebarPanel(
+               
+               # encadré principal pour la recherche
                wellPanel(
-                 h4("Saisir une adresse internationale"),
-                 textInput("adresse_osm", "Adresse complète", ""),
-                 actionButton("go_osm", "Rechercher", class = "btn btn-primary"),
-                 div(style = "margin-top: 10px;"),
-                 actionButton("reset_osm", "Réinitialiser", class = "btn btn-primary")
+                 h4("Saisir une adresse internationale"),   # titre de la boîte
+                 
+                 textInput("adresse_osm", "Adresse complète", ""),  # champ d'adresse libre
+                 
+                 actionButton("go_osm", "Rechercher", class = "btn btn-primary"),  # bouton pour lancer la recherche
+                 
+                 div(style = "margin-top: 10px;"),  # espacement vertical
+                 
+                 actionButton("reset_osm", "Réinitialiser", class = "btn btn-primary")  # bouton de remise à zéro
                ),
+               
+               # encadré séparé pour le choix du fond de carte
                wellPanel(
-                 h4("Choix du fond de carte"),
-                 selectInput("fond_carte_osm", "Fond de carte",
+                 h4("Choix du fond de carte"),  # titre
+                 
+                 selectInput("fond_carte_osm", "Fond de carte",   # liste déroulante des fonds
                              choices = c(
                                "Plan (OSM)" = "osm",
                                "Satellite (Esri)" = "satellite",
@@ -455,20 +487,21 @@ tabPanel("Recherche OSM - Monde",
                                "Carto sombre" = "carto_dark",
                                "Relief (Esri)" = "esri_topo"
                              ),
-                             selected = "osm")
+                             selected = "osm")  # valeur sélectionnée par défaut
                )
-               
              ),
+             
+             # colonne de droite contenant la carte et les résultats
              mainPanel(
-               leafletOutput("map_osm", height = "400px"),
-               tags$hr(),
-               h4("Informations renvoyées par Nominatim"),
-               uiOutput("info_osm")
-               
+               leafletOutput("map_osm", height = "400px"),  # affichage de la carte leaflet
+               tags$hr(),                                   # ligne de séparation visuelle
+               h4("Informations renvoyées par Nominatim"),  # titre des résultats
+               uiOutput("info_osm")                         # affichage dynamique des adresses retournées
              )
            )
          )
 ),
+
   # Onglet À propos 
 tabPanel("À propos",
          fluidPage(
@@ -541,23 +574,23 @@ tabPanel("À propos",
            )
          )
 )
-
-  
-  
 )
 
 
-# Serveur
+# serveur principal de l'application
 server <- function(input, output, session) {
+  
+  # variable réactive pour stocker les coordonnées et résultats de recherche
   coords <- reactiveVal(NULL)
   
-  
+  # initialiser la carte leaflet pour l’onglet france
   output$map <- renderLeaflet({
     leaflet() %>%
-      addTiles(group = "osm") %>%
-      setView(lng = 2.2, lat = 46.6, zoom = 6)
+      addTiles(group = "osm") %>%                       # ajout du fond de carte par défaut (plan)
+      setView(lng = 2.2, lat = 46.6, zoom = 6)          # centrage sur la france avec niveau de zoom standard
   })
-  # Icône personnalisée verte pastel
+  
+  # icône personnalisée verte pastel pour marquer les résultats sur la carte
   pastelIcon <- makeIcon(
     iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
     iconWidth = 25, iconHeight = 41,
@@ -567,258 +600,306 @@ server <- function(input, output, session) {
     shadowAnchorX = 12, shadowAnchorY = 41
   )
   
+  # observer les modifications dans la variable coords pour actualiser la carte
   observe({
-    coord <- coords()
-    res <- coord$result
+    coord <- coords()            # récupérer les coordonnées actuelles
+    res <- coord$result          # extraire le résultat principal
     
-    print(paste("longitude =", res$longitude, "| latitude =", res$latitude))  # 🔍 Ajout debug
+    # affichage console pour vérification des coordonnées
+    print(paste("longitude =", res$longitude, "| latitude =", res$latitude))
     
+    # condition : présence de coordonnées valides
     if (!is.null(res) &&
         is.numeric(res$longitude) &&
         is.numeric(res$latitude) &&
         !is.na(res$longitude) &&
         !is.na(res$latitude)) {
       
+      # mise à jour dynamique de la carte avec le marqueur vert pastel
       leafletProxy("map") %>%
         clearMarkers() %>%
         setView(lng = res$longitude, lat = res$latitude, zoom = 16) %>%
-        addMarkers(lng = res$longitude, lat = res$latitude, popup = res$label,
-                   icon = pastelIcon)
+        addMarkers(
+          lng = res$longitude,
+          lat = res$latitude,
+          popup = res$label,
+          icon = pastelIcon
+        )
+      
     } else {
+      # recentrage sur la france si coordonnées invalides ou absentes
       leafletProxy("map") %>%
         clearMarkers() %>%
         setView(lng = 2.2, lat = 46.6, zoom = 6)
     }
   })
+}
+# afficher un message d'accueil ou les résultats de la recherche à l'ouverture
+output$info <- renderUI({
+  coord <- coords()  # récupérer les coordonnées mémorisées
   
+  # cas où aucun champ n'a encore été rempli
+  if (is.null(coord)) {
+    return(tags$div(class = "pastel-box",
+                    tags$p("👋 bienvenue dans l’application client ban de géolocalisation"),
+                    tags$p("🔎 renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'"),
+                    tags$ul(
+                      tags$li("✅ rue + ville → ex. : 'place de la gare' + 'vitry-le-françois'"),
+                      tags$li("✅ rue + code postal → ex. : 'avenue victor hugo' + '75016'"),
+                      tags$li("✅ code commune insee → ex. : '51649'"),
+                      tags$li("✅ ville seule → ex. : 'toulouse'"),
+                      tags$li("✅ code postal seul → ex. : '13001'"),
+                      tags$li("✅ rue seule → ex. : 'impasse des lilas'")
+                    ),
+                    tags$p("🛠️ croiser les champs si plusieurs sont renseignés pour affiner les résultats")
+    ))
+  }
   
+  res <- coord$result  # récupérer le résultat principal
   
-  # Initialiser l'affichage dès l'arrivée sur la page
+  # cas où la requête n’a rien retourné
+  if (is.null(res)) {
+    return(tags$div(class = "pastel-box", tags$p("❌ aucune donnée trouvée pour cette adresse")))
+  }
+  
+  # affichage du détail des informations géographiques trouvées
+  tags$div(class = "pastel-box",
+           tags$p(tags$strong("📍 adresse : "), res$label),
+           tags$p(tags$strong("🏙️ ville : "), res$city),
+           tags$p(tags$strong("📮 code postal : "), res$postcode),
+           tags$p(tags$strong("🆔 code commune insee : "), res$insee),
+           tags$p(tags$strong("🛣️ rue : "), ifelse(res$street != "", res$street, "non fournie")),
+           tags$p(tags$strong("🏠 numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
+           tags$p(tags$strong("📌 quartier : "), ifelse(res$district != "", res$district, "non fourni")),
+           tags$p(tags$strong("🗺️ contexte : "), ifelse(res$context != "", res$context, "non fourni")),
+           tags$p(tags$strong("📏 score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
+           tags$p(tags$strong("🔍 type : "), ifelse(res$type != "", res$type, "non fourni"))
+  )
+})
+
+# remplir automatiquement le champ "ville" si le code insee est saisi
+observeEvent(input$code_insee, {
+  if (input$libcom == "") {
+    lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
+    if (length(lib) == 1 && !is.na(lib)) {
+      updateTextInput(session, "libcom", value = lib)
+    }
+  }
+})
+
+# déclencher une recherche lorsque le bouton "go" est cliqué ou entrée pressée
+observeEvent(input$go, {
+  cat("➡️ bouton go cliqué\n")
+  
+  # auto-compléter le champ "ville" si vide et code insee fourni
+  if (input$libcom == "" && input$code_insee != "") {
+    lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
+    if (length(lib) == 1 && !is.na(lib)) {
+      cat("🔁 remplissage auto de libcom depuis code_insee :", lib, "\n")
+      updateTextInput(session, "libcom", value = lib)
+    }
+  }
+  
+  # bloquer la recherche si tous les champs sont vides
+  if (input$libvoie == "" && input$libcom == "" && input$codpost == "" && input$code_insee == "") {
+    showNotification("veuillez remplir au moins un champ pour lancer la recherche.", type = "error")
+    output$info <- renderPrint({ cat("ℹ️ l’api nécessite au moins une adresse...") })
+    return()
+  }
+  
+  # appeler l’api principale avec les champs disponibles
+  res <- get_city_info_from_api(
+    codpost = input$codpost,
+    libcom = input$libcom,
+    libvoie = input$libvoie,
+    code_insee = input$code_insee
+  )
+  
+  # appeler aussi l’api multi pour récupérer plusieurs résultats éventuels
+  all <- get_city_info_from_api_multi(
+    codpost = input$codpost,
+    libcom = input$libcom,
+    libvoie = input$libvoie,
+    code_insee = input$code_insee
+  )
+  
+  # si aucun résultat principal mais au moins un résultat alternatif, reconstruire un résultat
+  if (is.null(res) && length(all) > 0) {
+    props <- all[[1]]$properties
+    coords_simple <- all[[1]]$geometry$coordinates
+    
+    # extraire les coordonnées si disponibles
+    if (!is.null(coords_simple) && length(coords_simple) == 2) {
+      longitude <- as.numeric(coords_simple[[1]])
+      latitude  <- as.numeric(coords_simple[[2]])
+    } else {
+      longitude <- NA
+      latitude <- NA
+    }
+    
+    # construire manuellement un objet de réponse simplifié
+    res <- list(
+      longitude = longitude,
+      latitude = latitude,
+      label = props$label %||% "",
+      name = props$name %||% "",
+      city = props$city %||% "",
+      postcode = props$postcode %||% "",
+      insee = props$citycode %||% "",
+      street = props$street %||% "",
+      housenumber = props$housenumber %||% "",
+      district = props$district %||% "",
+      context = props$context %||% "",
+      score = props$score %||% NA,
+      type = props$type %||% ""
+    )
+    cat("✅ résultat reconstruit depuis multi\n")
+  }
+  
+  # stocker les résultats (principal + liste multi) pour affichage et carte
+  coords(list(result = res, all_results = all))
+})
+
+# observer le clic sur le bouton "réinitialiser"
+observeEvent(input$reset, {
+  
+  # vider les champs de saisie : code postal, commune, insee, libellé de voie
+  updateTextInput(session, "codpost", value = "")
+  updateTextInput(session, "libcom", value = "")
+  updateTextInput(session, "code_insee", value = "")
+  updateTextInput(session, "libvoie", value = "")
+  
+  # réinitialiser la variable de coordonnées à null
+  coords(NULL)
+  
+  # réinitialiser la carte à la vue d'ensemble par défaut
+  leafletProxy("map") %>%
+    clearMarkers() %>%
+    setView(lng = 2.2, lat = 46.6, zoom = 6)
+  
+  # afficher un message d’accueil dans la boîte d'information
   output$info <- renderUI({
     coord <- coords()
     
     if (is.null(coord)) {
       return(tags$div(class = "pastel-box",
-                      tags$p("👋 Bienvenue dans l’application client BAN de géolocalisation !"),
-                      tags$p("🔎 Renseignez une adresse à gauche, puis appuyez sur Entrée ou cliquez sur 'Rechercher'."),
+                      tags$p("👋 bienvenue dans l’application client ban de géolocalisation !"),
+                      tags$p("🔎 renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'."),
                       tags$ul(
-                        tags$li("✅ Rue + Ville → ex. : 'place de la gare' + 'Vitry-le-François'"),
-                        tags$li("✅ Rue + Code postal → ex. : 'avenue Victor Hugo' + '75016'"),
-                        tags$li("✅ Code commune INSEE → ex. : '51649'"),
-                        tags$li("✅ Ville seule → ex. : 'Toulouse'"),
-                        tags$li("✅ Code postal seul → ex. : '13001'"),
-                        tags$li("✅ Rue seule → ex. : 'impasse des Lilas'")
+                        tags$li("✅ rue + ville → ex. : 'place de la gare' + 'vitry-le-françois'"),
+                        tags$li("✅ rue + code postal → ex. : 'avenue victor hugo' + '75016'"),
+                        tags$li("✅ code commune insee → ex. : '51649'"),
+                        tags$li("✅ ville seule → ex. : 'toulouse'"),
+                        tags$li("✅ code postal seul → ex. : '13001'"),
+                        tags$li("✅ rue seule → ex. : 'impasse des lilas'")
                       ),
-                      tags$p("🛠️ Si plusieurs champs sont remplis, ils seront croisés pour affiner les résultats.")
+                      tags$p("🛠️ croiser les champs renseignés pour affiner les résultats")
       ))
     }
     
+    # cas rare si coords() est revenu entre-temps
     res <- coord$result
     if (is.null(res)) {
-      return(tags$div(class = "pastel-box", tags$p("❌ Aucune donnée trouvée pour cette adresse.")))
+      return(tags$div(class = "pastel-box", tags$p("❌ aucune donnée trouvée pour cette adresse.")))
     }
     
+    # afficher les infos du résultat si présent
     tags$div(class = "pastel-box",
-             tags$p(tags$strong("📍 Adresse : "), res$label),
-             tags$p(tags$strong("🏙️ Ville : "), res$city),
-             tags$p(tags$strong("📮 Code postal : "), res$postcode),
-             tags$p(tags$strong("🆔 Code commune INSEE : "), res$insee),
-             tags$p(tags$strong("🛣️ Rue : "), ifelse(res$street != "", res$street, "Non fournie")),
-             tags$p(tags$strong("🏠 Numéro : "), ifelse(res$housenumber != "", res$housenumber, "Non fourni")),
-             tags$p(tags$strong("📌 Quartier : "), ifelse(res$district != "", res$district, "Non fourni")),
-             tags$p(tags$strong("🗺️ Contexte : "), ifelse(res$context != "", res$context, "Non fourni")),
-             tags$p(tags$strong("📏 Score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "Non fourni")),
-             tags$p(tags$strong("🔍 Type : "), ifelse(res$type != "", res$type, "Non fourni"))
+             tags$p(tags$strong("📍 adresse : "), res$label),
+             tags$p(tags$strong("🏙️ ville : "), res$city),
+             tags$p(tags$strong("📮 code postal : "), res$postcode),
+             tags$p(tags$strong("🆔 code commune insee : "), res$insee),
+             tags$p(tags$strong("🛣️ rue : "), ifelse(res$street != "", res$street, "non fournie")),
+             tags$p(tags$strong("🏠 numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
+             tags$p(tags$strong("📌 quartier : "), ifelse(res$district != "", res$district, "non fourni")),
+             tags$p(tags$strong("🗺️ contexte : "), ifelse(res$context != "", res$context, "non fourni")),
+             tags$p(tags$strong("📏 score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
+             tags$p(tags$strong("🔍 type : "), ifelse(res$type != "", res$type, "non fourni"))
     )
   })
   
-  
-  
-  observeEvent(input$code_insee, {
-    if (input$libcom == "") {
-      lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
-      if (length(lib) == 1 && !is.na(lib)) {
-        updateTextInput(session, "libcom", value = lib)
-      }
-    }
-  })
-  observeEvent(input$go, {
-    cat("➡️ Bouton GO cliqué\n")
-    
-    # 🧠 Remplir libcom depuis code INSEE si vide
-    if (input$libcom == "" && input$code_insee != "") {
-      lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
-      if (length(lib) == 1 && !is.na(lib)) {
-        cat("🔁 Remplissage auto de libcom depuis code_insee :", lib, "\n")
-        updateTextInput(session, "libcom", value = lib)
-      }
-    }
-    
-    # ❌ Pas d’appel API si tout est vide
-    if (input$libvoie == "" && input$libcom == "" && input$codpost == "" && input$code_insee == "") {
-      showNotification("Veuillez remplir au moins un champ pour lancer la recherche.", type = "error")
-      output$info <- renderPrint({ cat("ℹ️ L’API nécessite au moins une adresse...") })
-      return()
-    }
-    
-    # ✅ On appelle l’API avec code_insee, pas city
-    res <- get_city_info_from_api(codpost = input$codpost, libcom = input$libcom, libvoie = input$libvoie, code_insee = input$code_insee)
-    all <- get_city_info_from_api_multi(codpost = input$codpost, libcom = input$libcom, libvoie = input$libvoie, code_insee = input$code_insee)
-    
-    # Rattrapage si pas de résultat unique
-    if (is.null(res) && length(all) > 0) {
-      props <- all[[1]]$properties
-      coords_simple <- all[[1]]$geometry$coordinates
-      if (!is.null(coords_simple) && length(coords_simple) == 2) {
-        longitude <- as.numeric(coords_simple[[1]])
-        latitude  <- as.numeric(coords_simple[[2]])
-      } else {
-        longitude <- NA
-        latitude <- NA
-      }
-      res <- list(
-        longitude = longitude,
-        latitude = latitude,
-        label = props$label %||% "",
-        name = props$name %||% "",
-        city = props$city %||% "",
-        postcode = props$postcode %||% "",
-        insee = props$citycode %||% "",
-        street = props$street %||% "",
-        housenumber = props$housenumber %||% "",
-        district = props$district %||% "",
-        context = props$context %||% "",
-        score = props$score %||% NA,
-        type = props$type %||% ""
-      )
-      cat("✅ Résultat reconstruit depuis MULTI\n")
-    }
-    
-    coords(list(result = res, all_results = all))
-  })
-  
-  
-  
-  observeEvent(input$reset, {
-    updateTextInput(session, "codpost", value = "")
-    updateTextInput(session, "libcom", value = "")
-    updateTextInput(session, "code_insee", value = "")
-    updateTextInput(session, "libvoie", value = "")
-    coords(NULL)
-    
-    leafletProxy("map") %>%
-      clearMarkers() %>%
-      setView(lng = 2.2, lat = 46.6, zoom = 6)
-    
-    # 🔁 Forcer le reset de la boîte d'information
-    output$info <- renderUI({
-      coord <- coords()
-      
-      if (is.null(coord)) {
-        return(tags$div(class = "pastel-box",
-                        tags$p("👋 Bienvenue dans l’application client BAN de géolocalisation !"),
-                        tags$p("🔎 Renseignez une adresse à gauche, puis appuyez sur Entrée ou cliquez sur 'Rechercher'."),
-                        tags$ul(
-                          tags$li("✅ Rue + Ville → ex. : 'place de la gare' + 'Vitry-le-François'"),
-                          tags$li("✅ Rue + Code postal → ex. : 'avenue Victor Hugo' + '75016'"),
-                          tags$li("✅ Code commune INSEE → ex. : '51649'"),
-                          tags$li("✅ Ville seule → ex. : 'Toulouse'"),
-                          tags$li("✅ Code postal seul → ex. : '13001'"),
-                          tags$li("✅ Rue seule → ex. : 'impasse des Lilas'")
-                        ),
-                        tags$p("🛠️ Si plusieurs champs sont remplis, ils seront croisés pour affiner les résultats.")
-        ))
-      }
-      
-      res <- coord$result
-      if (is.null(res)) {
-        return(tags$div(class = "pastel-box", tags$p("❌ Aucune donnée trouvée pour cette adresse.")))
-      }
-      
-      tags$div(class = "pastel-box",
-               tags$p(tags$strong("📍 Adresse : "), res$label),
-               tags$p(tags$strong("🏙️ Ville : "), res$city),
-               tags$p(tags$strong("📮 Code postal : "), res$postcode),
-               tags$p(tags$strong("🆔 Code commune INSEE : "), res$insee),
-               tags$p(tags$strong("🛣️ Rue : "), ifelse(res$street != "", res$street, "Non fournie")),
-               tags$p(tags$strong("🏠 Numéro : "), ifelse(res$housenumber != "", res$housenumber, "Non fourni")),
-               tags$p(tags$strong("📌 Quartier : "), ifelse(res$district != "", res$district, "Non fourni")),
-               tags$p(tags$strong("🗺️ Contexte : "), ifelse(res$context != "", res$context, "Non fourni")),
-               tags$p(tags$strong("📏 Score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "Non fourni")),
-               tags$p(tags$strong("🔍 Type : "), ifelse(res$type != "", res$type, "Non fourni"))
-      )
-    })
-    
-  })
-  
-  
-  output$liste_resultats <- renderUI({
-    res <- coords()
-    if (is.null(res)) return(NULL)  # 🔹 Ajout clé
-    
-    feats <- res$all_results
-    if (is.null(feats) || length(feats) == 0) {
-      return(tags$div(class = "alert alert-warning", "❌ Aucun résultat trouvé."))
-    }
-    
-    labels <- lapply(feats, function(f) {
-      if (!is.null(f$properties$label)) {
-        type <- f$properties$type %||% ""
-        label <- f$properties$label
-        insee <- f$properties$citycode %||% ""
-        cp <- f$properties$postcode %||% ""
-        score <- f$properties$score %||% NA
-        score_txt <- if (!is.na(score)) paste0(" - Score : ", round(score * 100, 1), " %") else ""
-        
-        if (type == "municipality" && insee != "" && cp != "") {
-          paste0(label, " (Depcom : ", insee, ", CP : ", cp, ")", score_txt)
-        } else {
-          paste0(label, score_txt)
-        }
-      } else {
-        NULL
-      }
-    })
-    
-    # labels_valides <- labels[!sapply(labels, is.null)]
-    labels_valides <- labels[!sapply(labels, function(x) is.null(x) || x == "")]
-    
+})
 
-    titre <- if (length(labels_valides) == 1) {
-      "✅ Un seul résultat trouvé :"
+# générer dynamiquement une liste des résultats alternatifs issus de l’api
+output$liste_resultats <- renderUI({
+  
+  # récupérer les coordonnées et tous les résultats
+  res <- coords()
+  if (is.null(res)) return(NULL)  # aucun résultat encore, ne rien afficher
+  
+  feats <- res$all_results
+  if (is.null(feats) || length(feats) == 0) {
+    # aucun résultat alternatif trouvé
+    return(tags$div(class = "alert alert-warning", "❌ aucun résultat trouvé."))
+  }
+  
+  # construire les étiquettes de chaque résultat
+  labels <- lapply(feats, function(f) {
+    if (!is.null(f$properties$label)) {
+      type <- f$properties$type %||% ""
+      label <- f$properties$label
+      insee <- f$properties$citycode %||% ""
+      cp <- f$properties$postcode %||% ""
+      score <- f$properties$score %||% NA
+      score_txt <- if (!is.na(score)) paste0(" - score : ", round(score * 100, 1), " %") else ""
+      
+      # afficher le depcom et le code postal si c’est une commune
+      if (type == "municipality" && insee != "" && cp != "") {
+        paste0(label, " (depcom : ", insee, ", cp : ", cp, ")", score_txt)
+      } else {
+        paste0(label, score_txt)
+      }
     } else {
-      paste0("✅ ", length(labels_valides), " résultats trouvés :")
+      NULL
     }
-    
-    liste <- lapply(labels_valides, tags$li)
-    
-    wellPanel(
-      tags$h5(titre),
-      tags$ul(liste)
-    )
   })
-
   
-  observeEvent(input$fond_carte, {
-    proxy <- leafletProxy("map")
-    proxy %>% clearTiles()
-    
-    switch(input$fond_carte,
-           "osm" = proxy %>% addTiles(),
-           "satellite" = proxy %>% addProviderTiles("Esri.WorldImagery"),
-           "carto_light" = proxy %>% addProviderTiles("CartoDB.Positron"),
-           "carto_dark" = proxy %>% addProviderTiles("CartoDB.DarkMatter"),
-           "topo" = proxy %>% addProviderTiles("OpenTopoMap")
-    )
-  })
-  observeEvent(input$code_insee, {
-    if (input$libcom == "" && input$code_insee != "") {
-      lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
-      if (length(lib) == 1 && !is.na(lib)) {
-        updateTextInput(session, "libcom", value = lib)
-      }
+  # filtrer les libellés valides (non null, non vides)
+  labels_valides <- labels[!sapply(labels, function(x) is.null(x) || x == "")]
+  
+  # ajuster le titre selon le nombre de résultats
+  titre <- if (length(labels_valides) == 1) {
+    "✅ un seul résultat trouvé :"
+  } else {
+    paste0("✅ ", length(labels_valides), " résultats trouvés :")
+  }
+  
+  # afficher les résultats dans une liste
+  liste <- lapply(labels_valides, tags$li)
+  
+  wellPanel(
+    tags$h5(titre),
+    tags$ul(liste)
+  )
+})
+
+
+# changement de fond de carte selon la sélection utilisateur
+observeEvent(input$fond_carte, {
+  proxy <- leafletProxy("map")  # récupérer la carte existante
+  proxy %>% clearTiles()        # retirer les tuiles actuelles
+  
+  # ajouter les nouvelles tuiles selon le fond sélectionné
+  switch(input$fond_carte,
+         "osm" = proxy %>% addTiles(),
+         "satellite" = proxy %>% addProviderTiles("Esri.WorldImagery"),
+         "carto_light" = proxy %>% addProviderTiles("CartoDB.Positron"),
+         "carto_dark" = proxy %>% addProviderTiles("CartoDB.DarkMatter"),
+         "topo" = proxy %>% addProviderTiles("OpenTopoMap")
+  )
+})
+
+
+# remplir automatiquement le champ ville si uniquement le code insee est saisi
+observeEvent(input$code_insee, {
+  if (input$libcom == "" && input$code_insee != "") {
+    lib <- cog_2025$LIBELLE[which(cog_2025$COM == input$code_insee)]
+    if (length(lib) == 1 && !is.na(lib)) {
+      updateTextInput(session, "libcom", value = lib)
     }
-  })
+  }
+})
+
   
   
   output$map_osm <- renderLeaflet({
