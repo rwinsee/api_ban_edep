@@ -338,6 +338,15 @@ tags$style(HTML("
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 
+.pastel-box p,
+.pastel-box li,
+.pastel-box ul,
+.pastel-box strong,
+.pastel-box em,
+.pastel-box span,
+.pastel-box a {
+  color: #2b2b2b !important;
+}
   /* style des coordonnées dans les encadrés pastel */
   .pastel-box .coordonnees {
     color: #2b2b2b !important;
@@ -558,7 +567,7 @@ tabPanel("À propos",
            
            h4("🧑‍💻 Auteur"),
            p("Développé par ", strong("Romuald Weidmann"), " (INSEE)."),
-           p("Version 0.0.2"),
+           p("Version 0.0.3"),
            p(em("Dernière mise à jour : 19 mai 2025")),
            
            tags$hr(),
@@ -633,7 +642,7 @@ server <- function(input, output, session) {
         setView(lng = 2.2, lat = 46.6, zoom = 6)
     }
   })
-}
+
 # afficher un message d'accueil ou les résultats de la recherche à l'ouverture
 output$info <- renderUI({
   coord <- coords()  # récupérer les coordonnées mémorisées
@@ -641,8 +650,8 @@ output$info <- renderUI({
   # cas où aucun champ n'a encore été rempli
   if (is.null(coord)) {
     return(tags$div(class = "pastel-box",
-                    tags$p("👋 bienvenue dans l’application client ban de géolocalisation"),
-                    tags$p("🔎 renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'"),
+                    tags$p("👋 Bienvenue dans le module client BAN de géolocalisation"),
+                    tags$p("🔎 Renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'"),
                     tags$ul(
                       tags$li("✅ rue + ville → ex. : 'place de la gare' + 'vitry-le-françois'"),
                       tags$li("✅ rue + code postal → ex. : 'avenue victor hugo' + '75016'"),
@@ -651,7 +660,7 @@ output$info <- renderUI({
                       tags$li("✅ code postal seul → ex. : '13001'"),
                       tags$li("✅ rue seule → ex. : 'impasse des lilas'")
                     ),
-                    tags$p("🛠️ croiser les champs si plusieurs sont renseignés pour affiner les résultats")
+                    tags$p("🛠 Croiser les champs si plusieurs sont renseignés pour affiner les résultats")
     ))
   }
   
@@ -664,16 +673,16 @@ output$info <- renderUI({
   
   # affichage du détail des informations géographiques trouvées
   tags$div(class = "pastel-box",
-           tags$p(tags$strong("📍 adresse : "), res$label),
-           tags$p(tags$strong("🏙️ ville : "), res$city),
-           tags$p(tags$strong("📮 code postal : "), res$postcode),
-           tags$p(tags$strong("🆔 code commune insee : "), res$insee),
-           tags$p(tags$strong("🛣️ rue : "), ifelse(res$street != "", res$street, "non fournie")),
-           tags$p(tags$strong("🏠 numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
-           tags$p(tags$strong("📌 quartier : "), ifelse(res$district != "", res$district, "non fourni")),
-           tags$p(tags$strong("🗺️ contexte : "), ifelse(res$context != "", res$context, "non fourni")),
-           tags$p(tags$strong("📏 score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
-           tags$p(tags$strong("🔍 type : "), ifelse(res$type != "", res$type, "non fourni"))
+           tags$p(tags$strong("📍 Adresse : "), res$label),
+           tags$p(tags$strong("🏙 Ville : "), res$city),
+           tags$p(tags$strong("📮 Code postal : "), res$postcode),
+           tags$p(tags$strong("🆔 Code commune insee : "), res$insee),
+           tags$p(tags$strong("🛣 ️Rue : "), ifelse(res$street != "", res$street, "non fournie")),
+           tags$p(tags$strong("🏠 Numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
+           tags$p(tags$strong("📌 Quartier : "), ifelse(res$district != "", res$district, "non fourni")),
+           tags$p(tags$strong("🗺 ️Contexte : "), ifelse(res$context != "", res$context, "non fourni")),
+           tags$p(tags$strong("📏 Score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
+           tags$p(tags$strong("🔍 Type : "), ifelse(res$type != "", res$type, "non fourni"))
   )
 })
 
@@ -783,8 +792,8 @@ observeEvent(input$reset, {
     
     if (is.null(coord)) {
       return(tags$div(class = "pastel-box",
-                      tags$p("👋 bienvenue dans l’application client ban de géolocalisation !"),
-                      tags$p("🔎 renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'."),
+                      tags$p("👋 Bienvenue dans le module client BAN de géolocalisation"),
+                      tags$p("🔎 Renseigner une adresse à gauche, puis appuyer sur entrée ou cliquer sur 'rechercher'"),
                       tags$ul(
                         tags$li("✅ rue + ville → ex. : 'place de la gare' + 'vitry-le-françois'"),
                         tags$li("✅ rue + code postal → ex. : 'avenue victor hugo' + '75016'"),
@@ -793,7 +802,7 @@ observeEvent(input$reset, {
                         tags$li("✅ code postal seul → ex. : '13001'"),
                         tags$li("✅ rue seule → ex. : 'impasse des lilas'")
                       ),
-                      tags$p("🛠️ croiser les champs renseignés pour affiner les résultats")
+                      tags$p("🛠 Croiser les champs si plusieurs sont renseignés pour affiner les résultats")
       ))
     }
     
@@ -805,16 +814,16 @@ observeEvent(input$reset, {
     
     # afficher les infos du résultat si présent
     tags$div(class = "pastel-box",
-             tags$p(tags$strong("📍 adresse : "), res$label),
-             tags$p(tags$strong("🏙️ ville : "), res$city),
-             tags$p(tags$strong("📮 code postal : "), res$postcode),
-             tags$p(tags$strong("🆔 code commune insee : "), res$insee),
-             tags$p(tags$strong("🛣️ rue : "), ifelse(res$street != "", res$street, "non fournie")),
-             tags$p(tags$strong("🏠 numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
-             tags$p(tags$strong("📌 quartier : "), ifelse(res$district != "", res$district, "non fourni")),
-             tags$p(tags$strong("🗺️ contexte : "), ifelse(res$context != "", res$context, "non fourni")),
-             tags$p(tags$strong("📏 score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
-             tags$p(tags$strong("🔍 type : "), ifelse(res$type != "", res$type, "non fourni"))
+             tags$p(tags$strong("📍 Adresse : "), res$label),
+             tags$p(tags$strong("🏙 Ville : "), res$city),
+             tags$p(tags$strong("📮 Code postal : "), res$postcode),
+             tags$p(tags$strong("🆔 Code commune insee : "), res$insee),
+             tags$p(tags$strong("🛣 ️Rue : "), ifelse(res$street != "", res$street, "non fournie")),
+             tags$p(tags$strong("🏠 Numéro : "), ifelse(res$housenumber != "", res$housenumber, "non fourni")),
+             tags$p(tags$strong("📌 Quartier : "), ifelse(res$district != "", res$district, "non fourni")),
+             tags$p(tags$strong("🗺 ️Contexte : "), ifelse(res$context != "", res$context, "non fourni")),
+             tags$p(tags$strong("📏 Score : "), ifelse(!is.na(res$score), paste0(round(res$score * 100, 1), " %"), "non fourni")),
+             tags$p(tags$strong("🔍 Type : "), ifelse(res$type != "", res$type, "non fourni"))
     )
   })
   
@@ -900,125 +909,135 @@ observeEvent(input$code_insee, {
   }
 })
 
+# afficher la carte osm centrée initialement sur l’afrique
+output$map_osm <- renderLeaflet({
+  leaflet() %>% addTiles() %>% setView(lng = 0, lat = 20, zoom = 2)
+})
+
+# message d’accueil affiché dans la zone info_osm à l’arrivée
+output$info_osm <- renderUI({
+  tags$div(class = "pastel-box",
+           tags$p("👋 Bienvenue dans le module client OSM permettrant la recherche internationale d’adresses."),
+           tags$p("🔎 Saisir une adresse complète ou partielle à gauche (ex. : '5 Konstytucji 3 Maja, Grajewo')."),
+           tags$p("🌍 Cette recherche interroge le service ", tags$strong("nominatim"), " d’openstreetmap."),
+           tags$p("💡 Appuyer sur entrée pour valider ou échap pour réinitialiser.")
+  )
+})
+
+# action à effectuer lors d’un clic sur le bouton rechercher (osm)
+observeEvent(input$go_osm, {
+  if (input$adresse_osm == "") {
+    showNotification("veuillez entrer une adresse étrangère.", type = "error")
+    return()
+  }
   
+  # appel à l’api nominatim
+  resultats <- get_info_nominatim_multi(input$adresse_osm, limit = 20)
   
-  output$map_osm <- renderLeaflet({
-    leaflet() %>% addTiles() %>% setView(lng = 0, lat = 20, zoom = 2)
-  })
+  if (is.null(resultats)) {
+    output$info <- renderPrint({ cat("❌ aucun résultat trouvé via osm.") })
+    return()
+  }
+  
+  # affichage des résultats trouvés
   output$info_osm <- renderUI({
-    tags$div(class = "pastel-box",
-             tags$p("👋 Bienvenue dans la recherche internationale d’adresses."),
-             tags$p("🔎 Saisissez une adresse complète ou partielle à gauche (ex. : '5 Konstytucji 3 Maja, Grajewo')."),
-             tags$p("🌍 Cette recherche interroge le service ", tags$strong("Nominatim"), " d’OpenStreetMap."),
-             tags$p("💡 Vous pouvez également taper Entrée pour valider ou Échap pour réinitialiser.")
+    if (is.null(resultats)) {
+      return(tags$div("❌ aucun résultat trouvé."))
+    }
+    
+    # construction de la liste des résultats
+    liste <- lapply(seq_along(resultats), function(i) {
+      res <- resultats[[i]]
+      if (!is.null(res$display_name) && !is.null(res$lat) && !is.null(res$lon)) {
+        tags$li(
+          tags$span(paste0("📍 résultat ", i, " : ")),
+          actionLink(inputId = paste0("osm_result_", i), label = res$display_name, class = "osm-link"),
+          tags$br(),
+          tags$span(class = "coordonnees", paste0("🌍 lat : ", res$lat, " | lon : ", res$lon))
+        )
+      }
+    })
+    
+    tags$div(
+      class = "pastel-box",
+      tags$strong(paste0("✅ résultats trouvés : ", length(resultats))),
+      tags$ul(liste)
     )
   })
-  observeEvent(input$go_osm, {
-    if (input$adresse_osm == "") {
-      showNotification("Veuillez entrer une adresse étrangère.", type = "error")
-      return()
-    }
-    
-    resultats <- get_info_nominatim_multi(input$adresse_osm, limit = 20)
-    
-    if (is.null(resultats)) {
-      output$info <- renderPrint({ cat("❌ Aucun résultat trouvé via OSM.") })
-      return()
-    }
-    
-    output$info_osm <- renderUI({
-      if (is.null(resultats)) {
-        return(tags$div("❌ Aucun résultat trouvé."))
-      }
-      
-      liste <- lapply(seq_along(resultats), function(i) {
-        res <- resultats[[i]]
-        if (!is.null(res$display_name) && !is.null(res$lat) && !is.null(res$lon)) {
-          tags$li(
-            tags$span(paste0("📍 Résultat ", i, " : ")),
-            actionLink(inputId = paste0("osm_result_", i), label = res$display_name, class = "osm-link")
-            ,
-            tags$br(),
-            tags$span(class = "coordonnees", paste0("🌍 Lat : ", res$lat, " | Lon : ", res$lon))
-          )
+  
+  # ajouter les événements cliquables sur les résultats
+  for (i in seq_along(resultats)) {
+    local({
+      idx <- i
+      observeEvent(input[[paste0("osm_result_", idx)]], {
+        res <- resultats[[idx]]
+        if (!is.null(res$lat) && !is.null(res$lon)) {
+          leafletProxy("map_osm") %>%
+            clearMarkers() %>%
+            setView(lng = as.numeric(res$lon), lat = as.numeric(res$lat), zoom = 16) %>%
+            addMarkers(
+              lng = as.numeric(res$lon),
+              lat = as.numeric(res$lat),
+              popup = res$display_name,
+              icon = pastelIcon
+            )
         }
       })
-      
-      tags$div(
-        class = "pastel-box",
-        tags$strong(paste0("✅ Résultats trouvés : ", length(resultats))),
-        tags$ul(liste)
-      )
     })
-    
-    for (i in seq_along(resultats)) {
-      local({
-        idx <- i
-        observeEvent(input[[paste0("osm_result_", idx)]], {
-          res <- resultats[[idx]]
-          if (!is.null(res$lat) && !is.null(res$lon)) {
-            leafletProxy("map_osm") %>%
-              clearMarkers() %>%
-              setView(lng = as.numeric(res$lon), lat = as.numeric(res$lat), zoom = 16) %>%
-              addMarkers(
-                lng = as.numeric(res$lon),
-                lat = as.numeric(res$lat),
-                popup = res$display_name,
-                icon = pastelIcon
-              )
-          }
-        })
-      })
-    }
-    
-    
-    # Centrer la carte sur le premier résultat
-    res <- resultats[[1]]
-    if (!is.null(res$lat) && !is.null(res$lon)) {
-      leafletProxy("map_osm") %>%
-        clearMarkers() %>%
-        setView(lng = as.numeric(res$lon), lat = as.numeric(res$lat), zoom = 16) %>%
-        addMarkers(lng = as.numeric(res$lon), lat = as.numeric(res$lat),
-                   popup = res$display_name,
-                   icon = pastelIcon)
-    }
-  })
+  }
   
-  
-  observeEvent(input$reset_osm, {
-    updateTextInput(session, "adresse_osm", value = "")
+  # centrer la carte sur le premier résultat trouvé
+  res <- resultats[[1]]
+  if (!is.null(res$lat) && !is.null(res$lon)) {
     leafletProxy("map_osm") %>%
       clearMarkers() %>%
-      setView(lng = 0, lat = 20, zoom = 2)
-    
-    output$info_osm <- renderUI({
-      tags$div(class = "pastel-box",
-               tags$p("🔄 Recherche réinitialisée."),
-               tags$p("👋 Vous pouvez saisir une nouvelle adresse internationale."),
-               tags$p("📌 Exemple : ", tags$em("10 Downing Street, London"), " ou ", tags$em("Piazza San Marco, Venice"))
-      )
-    })
-  })
+      setView(lng = as.numeric(res$lon), lat = as.numeric(res$lat), zoom = 16) %>%
+      addMarkers(lng = as.numeric(res$lon), lat = as.numeric(res$lat),
+                 popup = res$display_name,
+                 icon = pastelIcon)
+  }
+})
+
+# réinitialiser les champs et la carte osm
+observeEvent(input$reset_osm, {
+  updateTextInput(session, "adresse_osm", value = "")
+  leafletProxy("map_osm") %>%
+    clearMarkers() %>%
+    setView(lng = 0, lat = 20, zoom = 2)
   
-  
-  # Ajout du déclenchement avec touche clavier (simulateur)
-  observeEvent(input$reset_osm, { shinyjs::delay(50, { updateTextInput(session, "adresse_osm", value = "") }) })
-  
-  
-  observeEvent(input$fond_carte_osm, {
-    proxy <- leafletProxy("map_osm")
-    proxy %>% clearTiles()
-    
-    switch(input$fond_carte_osm,
-           "osm" = proxy %>% addTiles(),
-           "satellite" = proxy %>% addProviderTiles("Esri.WorldImagery"),
-           "carto_light" = proxy %>% addProviderTiles("CartoDB.Positron"),
-           "carto_dark" = proxy %>% addProviderTiles("CartoDB.DarkMatter"),
-           "esri_topo" = proxy %>% addProviderTiles("Esri.WorldTopoMap")
+  # message de reset
+  output$info_osm <- renderUI({
+    tags$div(class = "pastel-box",
+             tags$p("🔄 Recherche réinitialisée."),
+             tags$p("👋 Saisir une nouvelle adresse internationale."),
+             tags$p("📌 Exemple : ", tags$em("10 downing street, london"), " ou ", tags$em("piazza san marco, venice"))
     )
   })
+})
+
+# petit délai pour que le champ se vide bien visuellement
+observeEvent(input$reset_osm, {
+  shinyjs::delay(50, {
+    updateTextInput(session, "adresse_osm", value = "")
+  })
+})
+
+# mise à jour dynamique du fond de carte osm
+observeEvent(input$fond_carte_osm, {
+  proxy <- leafletProxy("map_osm")
+  proxy %>% clearTiles()
   
+  switch(input$fond_carte_osm,
+         "osm" = proxy %>% addTiles(),
+         "satellite" = proxy %>% addProviderTiles("Esri.WorldImagery"),
+         "carto_light" = proxy %>% addProviderTiles("CartoDB.Positron"),
+         "carto_dark" = proxy %>% addProviderTiles("CartoDB.DarkMatter"),
+         "esri_topo" = proxy %>% addProviderTiles("Esri.WorldTopoMap")
+  )
+})
+
 }
+
 
 # Lancer l'application
 shinyApp(ui, server)  
